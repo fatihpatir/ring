@@ -17,84 +17,77 @@
         .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; display: flex; flex-direction: column; }
         .pointer { pointer-events: auto; cursor: pointer; }
 
-        .header { display: flex; justify-content: space-between; padding: 25px; align-items: center; }
+        /* ÜST PANEL: Sol ve Sağ gruplar */
+        .top-bar { display: flex; justify-content: space-between; padding: 20px; align-items: flex-start; }
         
-        .stats-container { text-align: center; margin-top: 10px; flex-grow: 1; }
-        #combo-ui { font-size: 24px; color: var(--neon-pink); font-weight: 900; opacity: 0; transition: 0.2s; text-shadow: 0 0 15px var(--neon-pink); font-style: italic; }
-        .score-val { font-size: 85px; font-weight: 100; margin: 0; line-height: 1; text-shadow: 0 0 30px rgba(255,255,255,0.1); }
-        .lvl-tag { font-size: 12px; background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 20px; letter-spacing: 3px; border: 1px solid rgba(255,255,255,0.2); }
+        .top-left { display: flex; gap: 10px; align-items: center; }
+        .icon-btn { font-size: 20px; background: rgba(255,255,255,0.08); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); }
+        
+        #install-btn { display: none; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); border-color: var(--neon-blue); }
 
-        .footer { padding: 20px; text-align: center; }
-        .dev-link { color: var(--neon-blue); text-decoration: none; font-weight: bold; font-size: 14px; text-shadow: 0 0 10px var(--neon-blue); letter-spacing: 2px; transition: 0.3s; }
+        /* SKOR VE DURUM: Sağ Üste Taşındı */
+        .top-right { text-align: right; background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
+        .score-small { font-size: 30px; font-weight: 200; margin: 0; color: white; }
+        .info-small { font-size: 9px; letter-spacing: 1px; color: var(--neon-blue); text-transform: uppercase; display: block; }
+        .max-small { font-size: 10px; opacity: 0.5; }
 
-        /* YÜKLEME BUTONU VE PANELİ */
-        #install-prompt {
-            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 242, 255, 0.1); border: 1px solid var(--neon-blue);
-            padding: 12px 20px; border-radius: 50px; display: none; align-items: center; gap: 10px;
-            backdrop-filter: blur(10px); z-index: 50; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
-        }
+        /* KOMBO: Ortada ama daha şeffaf */
+        #combo-ui { position: absolute; top: 25%; left: 50%; transform: translateX(-50%); font-size: 24px; color: var(--neon-pink); font-weight: 900; opacity: 0; text-shadow: 0 0 15px var(--neon-pink); pointer-events: none; }
 
-        #ios-install-guide {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 200; display: none; flex-direction: column;
-            align-items: center; justify-content: center; text-align: center; padding: 30px;
-        }
+        .footer { position: absolute; bottom: 20px; width: 100%; text-align: center; }
+        .dev-link { color: var(--neon-blue); text-decoration: none; font-weight: bold; font-size: 12px; opacity: 0.6; letter-spacing: 2px; }
 
-        .btn { background: none; border: 1px solid #fff; color: #fff; padding: 16px; margin: 10px 0; border-radius: 50px; cursor: pointer; width: 100%; font-weight: bold; letter-spacing: 1px; transition: 0.2s; font-family: inherit; }
+        #ios-install-guide { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
+
+        .btn { background: none; border: 1px solid #fff; color: #fff; padding: 16px; margin: 10px auto; border-radius: 50px; cursor: pointer; width: 80%; max-width: 250px; font-weight: bold; display: block; font-family: inherit; }
         .btn-main { border-color: var(--neon-blue); color: var(--neon-blue); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
 
-        #settings-panel, #game-over-screen {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(5, 5, 15, 0.95); border: 2px solid var(--neon-blue); padding: 40px; border-radius: 30px;
-            display: none; text-align: center; min-width: 300px; z-index: 100;
-        }
-        #game-over-screen { width: 100%; height: 100%; border: none; border-radius: 0; background: rgba(0,0,0,0.95); }
+        .overlay-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(10, 10, 20, 0.98); border: 2px solid var(--neon-blue); padding: 40px 20px; border-radius: 30px; display: none; text-align: center; width: 85%; max-width: 320px; z-index: 100; box-shadow: 0 0 60px rgba(0,0,0,1); }
+        #game-over-screen { border-color: #ff0055; }
     </style>
 </head>
 <body>
 
-<div id="install-prompt" class="pointer" onclick="handleInstall()">
-    <span style="font-size: 14px; font-weight: bold; color: var(--neon-blue);">📲 UYGULAMAYI YÜKLE</span>
-</div>
-
 <div id="ios-install-guide" class="pointer" onclick="this.style.display='none'">
     <h2 style="color: var(--neon-blue);">iPhone'a Yükle</h2>
-    <p style="line-height: 1.6;">Bu oyunu uygulama olarak kullanmak için:</p>
-    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; margin: 20px 0;">
-        1. Alttaki <strong>Paylaş</strong> ikonuna dokun <br> (Kare içinde yukarı ok)<br><br>
-        2. Listeyi kaydır ve <br><strong>"Ana Ekrana Ekle"</strong> seçeneğini seç.
+    <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 25px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
+        1. Alttaki <strong>Paylaş</strong> ikonuna dokun<br><br>
+        2. <strong>"Ana Ekrana Ekle"</strong> seçeneğini seç.
     </div>
-    <button class="btn btn-main" style="width: 150px;">ANLADIM</button>
+    <button class="btn btn-main">ANLADIM</button>
 </div>
 
 <div class="ui-layer">
-    <div class="header">
-        <div style="width: 50px;"></div>
-        <div class="pointer" onclick="togglePause()" style="font-size: 28px; background: rgba(255,255,255,0.1); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">⚙️</div>
+    <div class="top-bar">
+        <div class="top-left">
+            <div class="icon-btn pointer" onclick="togglePause()">⚙️</div>
+            <div id="install-btn" class="icon-btn pointer" onclick="handleInstall()">📲</div>
+        </div>
+        
+        <div class="top-right">
+            <span id="lvl-display" class="info-small">SİSTEM: SV-1</span>
+            <p class="score-small" id="score-val">0</p>
+            <span class="max-small">EN İYİ: <span id="max-val">0</span></span>
+        </div>
     </div>
-    
-    <div class="stats-container">
-        <div id="combo-ui">KOMBO X2</div>
-        <p class="score-val" id="score-val">0</p>
-        <div id="lvl-display" class="lvl-tag">SEVİYE 1</div>
-    </div>
+
+    <div id="combo-ui">KOMBO X2</div>
 
     <div class="footer">
         <a href="https://fatihpatir.github.io/web" target="_blank" class="dev-link pointer">FATİH PATIR</a>
     </div>
 
-    <div id="settings-panel" class="pointer">
-        <h2 style="color: var(--neon-blue); letter-spacing: 6px; margin-top: 0;">DURDURULDU</h2>
+    <div id="settings-panel" class="overlay-panel pointer">
+        <h2 style="color: var(--neon-blue); letter-spacing: 4px; margin-top: 0;">DURAKLATILDI</h2>
         <button class="btn btn-main" onclick="togglePause()">DEVAM ET</button>
-        <button class="btn" onclick="location.reload()">SİSTEMİ YENİLE</button>
+        <button class="btn" onclick="location.reload()">BAŞTAN BAŞLA</button>
     </div>
-</div>
 
-<div id="game-over-screen">
-    <h1 style="color: #ff0055; font-size: 45px; letter-spacing: 8px;">SİSTEM ÇÖKTÜ</h1>
-    <p id="final-score" style="font-size: 22px; margin-bottom: 30px;">TOPLAM VERİ: 0</p>
-    <button class="btn btn-main" onclick="location.reload()" style="width: 220px;">YENİDEN BAŞLAT</button>
+    <div id="game-over-screen" class="overlay-panel pointer">
+        <h1 style="color: #ff0055; font-size: 32px; letter-spacing: 4px; margin-bottom: 10px;">SİSTEM ÇÖKTÜ</h1>
+        <p id="final-score" style="font-size: 20px; margin-bottom: 25px;">SKOR: 0</p>
+        <button class="btn btn-main" onclick="location.reload()">TEKRAR DENE</button>
+    </div>
 </div>
 
 <canvas id="gameCanvas"></canvas>
@@ -103,13 +96,17 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const scoreEl = document.getElementById('score-val');
+    const maxEl = document.getElementById('max-val');
     const comboEl = document.getElementById('combo-ui');
     const lvlEl = document.getElementById('lvl-display');
+    const installBtn = document.getElementById('install-btn');
     
     let gameActive = true, isPaused = false;
     let score = 0, combo = 0, level = 1;
-    let frame = 0, speed = 4.2, spawnRate = 85;
-    let playerColorIndex = 0, shakeTime = 0;
+    let maxScore = localStorage.getItem('vortexMaxScore') || 0;
+    maxEl.innerText = maxScore;
+
+    let frame = 0, speed = 4.2, spawnRate = 85, shakeTime = 0, playerColorIndex = 0;
 
     const themes = [{ colors: ['#00f2ff', '#ff00ff'] }, { colors: ['#39ff14', '#ffff00'] }, { colors: ['#ffee00', '#00f2ff'] }, { colors: ['#ff4e00', '#7a00ff'] }];
     let particles = [], obstacles = [], stars = [];
@@ -119,7 +116,7 @@
     window.onresize = resize; resize();
 
     function playSfx(f, d=0.1, type='sine') {
-        try { const o = new (window.AudioContext || window.webkitAudioContext)(); const osc = o.createOscillator(); const g = o.createGain(); osc.type = type; osc.frequency.setValueAtTime(f, o.currentTime); g.gain.setValueAtTime(0.1, o.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, o.currentTime + d); osc.connect(g); g.connect(o.destination); osc.start(); osc.stop(o.currentTime + d); } catch(e){}
+        try { const o = new (window.AudioContext || window.webkitAudioContext)(); const osc = o.createOscillator(); const g = o.createGain(); osc.type = type; osc.frequency.setValueAtTime(f, o.currentTime); g.gain.setValueAtTime(0.05, o.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, o.currentTime + d); osc.connect(g); g.connect(o.destination); osc.start(); osc.stop(o.currentTime + d); } catch(e){}
     }
 
     function createParticles(x, y, color) { for(let i=0; i<20; i++) { particles.push({ x, y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 1, color, size: Math.random()*4+1 }); } }
@@ -131,31 +128,14 @@
     window.ontouchstart = (e) => { if(!e.target.closest('.pointer')) { e.preventDefault(); switchColor(); } };
     window.onmousedown = (e) => { if(!e.target.closest('.pointer')) switchColor(); };
 
-    // PWA INSTALL LOGIC
+    // PWA & iOS Button Logic
     let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        document.getElementById('install-prompt').style.display = 'flex';
-    });
-
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'flex'; });
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    if (isIOS && !isStandalone) {
-        document.getElementById('install-prompt').style.display = 'flex';
-    }
+    if (isIOS && !isStandalone) installBtn.style.display = 'flex';
 
-    function handleInstall() {
-        if (isIOS) {
-            document.getElementById('ios-install-guide').style.display = 'flex';
-        } else if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then(() => {
-                deferredPrompt = null;
-                document.getElementById('install-prompt').style.display = 'none';
-            });
-        }
-    }
+    function handleInstall() { if (isIOS) document.getElementById('ios-install-guide').style.display = 'flex'; else if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => { deferredPrompt = null; installBtn.style.display = 'none'; }); } }
 
     function loop() {
         if(!gameActive || isPaused) return;
@@ -171,14 +151,15 @@
             if(o.y > canvas.height-220 && o.y < canvas.height-100) {
                 if(o.type === playerColorIndex) {
                     score += 1 + Math.floor(combo/10); combo++; scoreEl.innerText = score; comboEl.innerText = `KOMBO X${combo}`; comboEl.style.opacity = combo > 2 ? 1 : 0; createParticles(o.x, o.y, oCol); obstacles.splice(i, 1); shakeTime = 6; playSfx(400 + combo*8, 0.08);
-                    if(score % 15 === 0) { level++; speed += 0.45; spawnRate = Math.max(35, spawnRate-4); lvlEl.innerText = `SEVİYE ${level}`; playSfx(800, 0.2, 'square'); }
+                    if(score % 15 === 0) { level++; speed += 0.45; spawnRate = Math.max(35, spawnRate-4); lvlEl.innerText = `SİSTEM: SV-${level}`; playSfx(800, 0.2, 'square'); }
+                    if(score > maxScore) { maxScore = score; maxEl.innerText = maxScore; localStorage.setItem('vortexMaxScore', maxScore); }
                 } else endGame();
             } else if(o.y > canvas.height) endGame();
         });
         ctx.setTransform(1, 0, 0, 1, 0, 0); frame++; requestAnimationFrame(loop);
     }
 
-    function endGame() { gameActive = false; document.getElementById('game-over-screen').style.display = 'flex'; document.getElementById('final-score').innerText = `TOPLAM VERİ: ${score}`; playSfx(60, 0.6, 'sawtooth'); canvas.style.filter = "invert(1) contrast(2)"; }
+    function endGame() { gameActive = false; document.getElementById('game-over-screen').style.display = 'block'; document.getElementById('final-score').innerText = `SKOR: ${score}`; playSfx(60, 0.6, 'sawtooth'); canvas.style.filter = "grayscale(1) brightness(0.5)"; }
 
     loop();
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(()=>{}); }
