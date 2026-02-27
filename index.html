@@ -10,52 +10,76 @@
     <link rel="apple-touch-icon" href="icon-192.png">
     <style>
         :root { --neon-blue: #00f2ff; --neon-pink: #ff00ff; }
-        body { margin: 0; background: #000; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; touch-action: none; }
+        body { 
+            margin: 0; background: #000; color: white; 
+            font-family: 'Segoe UI', sans-serif; overflow: hidden; 
+            touch-action: none; height: 100vh;
+        }
         canvas { display: block; transition: filter 0.3s; }
         .paused canvas { filter: blur(10px) brightness(0.4); }
 
-        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; display: flex; flex-direction: column; }
+        .ui-layer { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            pointer-events: none; z-index: 10; display: flex; flex-direction: column; 
+        }
         .pointer { pointer-events: auto; cursor: pointer; }
 
-        /* ÜST PANEL: Sol ve Sağ gruplar */
-        .top-bar { display: flex; justify-content: space-between; padding: 20px; align-items: flex-start; }
+        /* Üst Panel - iPhone 17 Dinamik Ada Uyumu */
+        .top-bar { 
+            display: flex; justify-content: space-between; 
+            padding: calc(env(safe-area-inset-top) + 15px) 20px 10px 20px; 
+            align-items: center; 
+        }
         
-        .top-left { display: flex; gap: 10px; align-items: center; }
-        .icon-btn { font-size: 20px; background: rgba(255,255,255,0.08); width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); }
+        .top-left { display: flex; gap: 12px; align-items: center; }
+        .icon-btn { 
+            font-size: 18px; background: rgba(255,255,255,0.1); 
+            width: 42px; height: 42px; display: flex; align-items: center; 
+            justify-content: center; border-radius: 50%; 
+            border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+        }
         
-        #install-btn { display: none; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); border-color: var(--neon-blue); }
+        #install-btn { display: none; color: var(--neon-blue); }
 
-        /* SKOR VE DURUM: Sağ Üste Taşındı */
-        .top-right { text-align: right; background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
-        .score-small { font-size: 30px; font-weight: 200; margin: 0; color: white; }
-        .info-small { font-size: 9px; letter-spacing: 1px; color: var(--neon-blue); text-transform: uppercase; display: block; }
-        .max-small { font-size: 10px; opacity: 0.5; }
+        .top-right { 
+            text-align: right; background: rgba(255,255,255,0.08); 
+            padding: 10px 15px; border-radius: 16px; 
+            border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(15px); 
+        }
+        .score-small { font-size: 24px; font-weight: 700; margin: 0; color: white; line-height: 1; }
+        .info-small { font-size: 9px; letter-spacing: 1.5px; color: var(--neon-blue); text-transform: uppercase; display: block; margin-bottom: 3px; }
+        .max-small { font-size: 10px; opacity: 0.6; display: block; margin-top: 3px; }
 
-        /* KOMBO: Ortada ama daha şeffaf */
-        #combo-ui { position: absolute; top: 25%; left: 50%; transform: translateX(-50%); font-size: 24px; color: var(--neon-pink); font-weight: 900; opacity: 0; text-shadow: 0 0 15px var(--neon-pink); pointer-events: none; }
+        #combo-ui { 
+            position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); 
+            font-size: 28px; color: var(--neon-pink); font-weight: 900; opacity: 0; 
+            text-shadow: 0 0 20px var(--neon-pink); pointer-events: none; 
+            transition: opacity 0.2s;
+        }
 
-        .footer { position: absolute; bottom: 20px; width: 100%; text-align: center; }
-        .dev-link { color: var(--neon-blue); text-decoration: none; font-weight: bold; font-size: 12px; opacity: 0.6; letter-spacing: 2px; }
+        /* Alt Alan - iPhone Kaydırma Çubuğu Uyumu */
+        .footer { 
+            position: absolute; bottom: calc(env(safe-area-inset-bottom) + 10px); 
+            width: 100%; text-align: center; 
+        }
+        .dev-link { color: var(--neon-blue); text-decoration: none; font-weight: bold; font-size: 10px; opacity: 0.4; letter-spacing: 3px; }
 
-        #ios-install-guide { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
-
-        .btn { background: none; border: 1px solid #fff; color: #fff; padding: 16px; margin: 10px auto; border-radius: 50px; cursor: pointer; width: 80%; max-width: 250px; font-weight: bold; display: block; font-family: inherit; }
-        .btn-main { border-color: var(--neon-blue); color: var(--neon-blue); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
-
-        .overlay-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(10, 10, 20, 0.98); border: 2px solid var(--neon-blue); padding: 40px 20px; border-radius: 30px; display: none; text-align: center; width: 85%; max-width: 320px; z-index: 100; box-shadow: 0 0 60px rgba(0,0,0,1); }
-        #game-over-screen { border-color: #ff0055; }
+        .overlay-panel { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            background: rgba(5, 5, 15, 0.95); border: 2px solid var(--neon-blue); 
+            padding: 40px 20px; border-radius: 35px; display: none; 
+            text-align: center; width: 80%; max-width: 300px; z-index: 100; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(20px);
+        }
+        .btn { 
+            background: rgba(255,255,255,0.05); border: 1px solid #fff; color: #fff; 
+            padding: 14px; margin: 12px auto; border-radius: 50px; cursor: pointer; 
+            width: 90%; font-weight: bold; display: block; font-family: inherit; transition: 0.2s;
+        }
+        .btn-main { border-color: var(--neon-blue); color: var(--neon-blue); }
     </style>
 </head>
 <body>
-
-<div id="ios-install-guide" class="pointer" onclick="this.style.display='none'">
-    <h2 style="color: var(--neon-blue);">iPhone'a Yükle</h2>
-    <div style="background: rgba(255,255,255,0.05); padding: 25px; border-radius: 25px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.1);">
-        1. Alttaki <strong>Paylaş</strong> ikonuna dokun<br><br>
-        2. <strong>"Ana Ekrana Ekle"</strong> seçeneğini seç.
-    </div>
-    <button class="btn btn-main">ANLADIM</button>
-</div>
 
 <div class="ui-layer">
     <div class="top-bar">
@@ -65,7 +89,7 @@
         </div>
         
         <div class="top-right">
-            <span id="lvl-display" class="info-small">SİSTEM: SV-1</span>
+            <span id="lvl-display" class="info-small">SİSTEM SV-1</span>
             <p class="score-small" id="score-val">0</p>
             <span class="max-small">EN İYİ: <span id="max-val">0</span></span>
         </div>
@@ -74,19 +98,19 @@
     <div id="combo-ui">KOMBO X2</div>
 
     <div class="footer">
-        <a href="https://fatihpatir.github.io/web" target="_blank" class="dev-link pointer">FATİH PATIR</a>
+        <a href="https://fatihpatir.github.io/web" target="_blank" class="dev-link pointer">NENE HATUN MTAL | BİLİŞİM</a>
     </div>
 
     <div id="settings-panel" class="overlay-panel pointer">
-        <h2 style="color: var(--neon-blue); letter-spacing: 4px; margin-top: 0;">DURAKLATILDI</h2>
+        <h2 style="color: var(--neon-blue); letter-spacing: 4px;">DURAKLATILDI</h2>
         <button class="btn btn-main" onclick="togglePause()">DEVAM ET</button>
         <button class="btn" onclick="location.reload()">BAŞTAN BAŞLA</button>
     </div>
 
     <div id="game-over-screen" class="overlay-panel pointer">
-        <h1 style="color: #ff0055; font-size: 32px; letter-spacing: 4px; margin-bottom: 10px;">SİSTEM ÇÖKTÜ</h1>
-        <p id="final-score" style="font-size: 20px; margin-bottom: 25px;">SKOR: 0</p>
-        <button class="btn btn-main" onclick="location.reload()">TEKRAR DENE</button>
+        <h1 style="color: #ff0055; letter-spacing: 2px;">SİSTEM HATASI</h1>
+        <p id="final-score" style="font-size: 22px; margin-bottom: 20px;">SKOR: 0</p>
+        <button class="btn btn-main" onclick="location.reload()">TEKRAR BAĞLAN</button>
     </div>
 </div>
 
@@ -107,62 +131,70 @@
     maxEl.innerText = maxScore;
 
     let frame = 0, speed = 4.2, spawnRate = 85, shakeTime = 0, playerColorIndex = 0;
-
     const themes = [{ colors: ['#00f2ff', '#ff00ff'] }, { colors: ['#39ff14', '#ffff00'] }, { colors: ['#ffee00', '#00f2ff'] }, { colors: ['#ff4e00', '#7a00ff'] }];
     let particles = [], obstacles = [], stars = [];
     for(let i=0; i<60; i++) stars.push({x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, s: Math.random()*2, o: Math.random()});
 
-    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    function resize() { 
+        canvas.width = window.innerWidth; 
+        canvas.height = window.innerHeight; 
+    }
     window.onresize = resize; resize();
 
     function playSfx(f, d=0.1, type='sine') {
         try { const o = new (window.AudioContext || window.webkitAudioContext)(); const osc = o.createOscillator(); const g = o.createGain(); osc.type = type; osc.frequency.setValueAtTime(f, o.currentTime); g.gain.setValueAtTime(0.05, o.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, o.currentTime + d); osc.connect(g); g.connect(o.destination); osc.start(); osc.stop(o.currentTime + d); } catch(e){}
     }
 
-    function createParticles(x, y, color) { for(let i=0; i<20; i++) { particles.push({ x, y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 1, color, size: Math.random()*4+1 }); } }
+    function createParticles(x, y, color) { for(let i=0; i<15; i++) { particles.push({ x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 1, color, size: Math.random()*3+1 }); } }
 
-    function togglePause() { if(!gameActive) return; isPaused = !isPaused; document.getElementById('settings-panel').style.display = isPaused ? 'block' : 'none'; document.body.classList.toggle('paused', isPaused); if(!isPaused) loop(); }
+    function togglePause() { if(!gameActive) return; isPaused = !isPaused; document.getElementById('settings-panel').style.display = isPaused ? 'block' : 'none'; if(!isPaused) loop(); }
 
     const switchColor = () => { if(!gameActive || isPaused) return; playerColorIndex = playerColorIndex === 0 ? 1 : 0; playSfx(250 + playerColorIndex*150, 0.06, 'triangle'); };
 
     window.ontouchstart = (e) => { if(!e.target.closest('.pointer')) { e.preventDefault(); switchColor(); } };
     window.onmousedown = (e) => { if(!e.target.closest('.pointer')) switchColor(); };
 
-    // PWA & iOS Button Logic
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'flex'; });
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    if (isIOS && !isStandalone) installBtn.style.display = 'flex';
-
-    function handleInstall() { if (isIOS) document.getElementById('ios-install-guide').style.display = 'flex'; else if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => { deferredPrompt = null; installBtn.style.display = 'none'; }); } }
-
     function loop() {
         if(!gameActive || isPaused) return;
         let theme = themes[(level-1)%themes.length];
         ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if(shakeTime > 0) { ctx.translate(Math.random()*8-4, Math.random()*8-4); shakeTime--; }
-        stars.forEach(s => { s.y += speed * 0.4; if(s.y > canvas.height) { s.y = 0; s.x = Math.random()*canvas.width; } ctx.fillStyle = `rgba(255,255,255,${s.o})`; ctx.fillRect(s.x, s.y, s.s, s.s); });
-        let pCol = theme.colors[playerColorIndex]; ctx.shadowBlur = 25 + (Math.min(combo, 20)*2); ctx.shadowColor = pCol; ctx.strokeStyle = pCol; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height-160, 55, 0, Math.PI*2); ctx.stroke(); ctx.shadowBlur = 0;
-        particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life -= 0.025; if(p.life <= 0) particles.splice(i, 1); ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, p.size, p.size); }); ctx.globalAlpha = 1;
-        if(frame % Math.floor(spawnRate) === 0) obstacles.push({x: canvas.width/2, y: -50, type: Math.random()>0.5?0:1, r: 24});
+        
+        if(shakeTime > 0) { ctx.translate(Math.random()*6-3, Math.random()*6-3); shakeTime--; }
+        
+        stars.forEach(s => { s.y += speed * 0.3; if(s.y > canvas.height) s.y = 0; ctx.fillStyle = `rgba(255,255,255,${s.o})`; ctx.fillRect(s.x, s.y, s.s, s.s); });
+        
+        let pCol = theme.colors[playerColorIndex];
+        let ringY = canvas.height * 0.75; // Halka konumu ekranın %75'inde sabitlendi
+        
+        ctx.shadowBlur = 20; ctx.shadowColor = pCol; ctx.strokeStyle = pCol; ctx.lineWidth = 8;
+        ctx.beginPath(); ctx.arc(canvas.width/2, ringY, 50, 0, Math.PI*2); ctx.stroke(); ctx.shadowBlur = 0;
+        
+        particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life -= 0.03; if(p.life <= 0) particles.splice(i, 1); ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, p.size, p.size); }); ctx.globalAlpha = 1;
+        
+        if(frame % Math.floor(spawnRate) === 0) obstacles.push({x: canvas.width/2, y: -50, type: Math.random()>0.5?0:1, r: 22});
+        
         obstacles.forEach((o, i) => {
-            o.y += speed; let oCol = theme.colors[o.type]; ctx.fillStyle = oCol; ctx.shadowBlur = 10; ctx.shadowColor = oCol; ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
-            if(o.y > canvas.height-220 && o.y < canvas.height-100) {
+            o.y += speed; 
+            let oCol = theme.colors[o.type];
+            ctx.fillStyle = oCol; ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI*2); ctx.fill();
+            
+            if(o.y > ringY - 40 && o.y < ringY + 40) {
                 if(o.type === playerColorIndex) {
-                    score += 1 + Math.floor(combo/10); combo++; scoreEl.innerText = score; comboEl.innerText = `KOMBO X${combo}`; comboEl.style.opacity = combo > 2 ? 1 : 0; createParticles(o.x, o.y, oCol); obstacles.splice(i, 1); shakeTime = 6; playSfx(400 + combo*8, 0.08);
-                    if(score % 15 === 0) { level++; speed += 0.45; spawnRate = Math.max(35, spawnRate-4); lvlEl.innerText = `SİSTEM: SV-${level}`; playSfx(800, 0.2, 'square'); }
+                    score++; combo++; scoreEl.innerText = score;
+                    comboEl.innerText = `KOMBO X${combo}`; comboEl.style.opacity = combo > 4 ? 1 : 0;
+                    createParticles(o.x, o.y, oCol); obstacles.splice(i, 1); shakeTime = 5; playSfx(400 + combo*5, 0.07);
+                    if(score % 15 === 0) { level++; speed += 0.4; spawnRate = Math.max(40, spawnRate-5); lvlEl.innerText = `SİSTEM SV-${level}`; }
                     if(score > maxScore) { maxScore = score; maxEl.innerText = maxScore; localStorage.setItem('vortexMaxScore', maxScore); }
                 } else endGame();
             } else if(o.y > canvas.height) endGame();
         });
+        
         ctx.setTransform(1, 0, 0, 1, 0, 0); frame++; requestAnimationFrame(loop);
     }
 
-    function endGame() { gameActive = false; document.getElementById('game-over-screen').style.display = 'block'; document.getElementById('final-score').innerText = `SKOR: ${score}`; playSfx(60, 0.6, 'sawtooth'); canvas.style.filter = "grayscale(1) brightness(0.5)"; }
+    function endGame() { gameActive = false; document.getElementById('game-over-screen').style.display = 'block'; document.getElementById('final-score').innerText = `SKOR: ${score}`; playSfx(50, 0.5, 'sawtooth'); }
 
     loop();
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 </script>
 </body>
 </html>
