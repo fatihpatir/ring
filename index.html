@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NEON VORTEX: DYNAMICS</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        :root { --neon-blue: #00f2ff; --neon-pink: #ff00ff; }
+        body { margin: 0; background: #000; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; touch-action: none; }
+        canvas { display: block; transition: filter 0.3s; }
+        .paused canvas { filter: blur(10px) brightness(0.4); }
+
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; display: flex; flex-direction: column; }
+        .pointer { pointer-events: auto; cursor: pointer; }
+
+        .header { display: flex; justify-content: space-between; padding: 25px; align-items: center; }
+        
+        .stats-container { text-align: center; margin-top: 10px; flex-grow: 1; }
+        #combo-ui { font-size: 24px; color: var(--neon-pink); font-weight: 900; opacity: 0; transition: 0.2s; text-shadow: 0 0 15px var(--neon-pink); font-style: italic; }
+        .score-val { font-size: 85px; font-weight: 100; margin: 0; line-height: 1; text-shadow: 0 0 30px rgba(255,255,255,0.1); }
+        .lvl-tag { font-size: 12px; background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 20px; letter-spacing: 3px; border: 1px solid rgba(255,255,255,0.2); }
+
+        .footer { padding: 20px; text-align: center; }
+        .dev-link { color: var(--neon-blue); text-decoration: none; font-weight: bold; font-size: 14px; text-shadow: 0 0 10px var(--neon-blue); letter-spacing: 2px; transition: 0.3s; }
+
+        /* YÜKLEME BUTONU VE PANELİ */
+        #install-prompt {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 242, 255, 0.1); border: 1px solid var(--neon-blue);
+            padding: 12px 20px; border-radius: 50px; display: none; align-items: center; gap: 10px;
+            backdrop-filter: blur(10px); z-index: 50; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+        }
+
+        #ios-install-guide {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 200; display: none; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center; padding: 30px;
+        }
+
+        .btn { background: none; border: 1px solid #fff; color: #fff; padding: 16px; margin: 10px 0; border-radius: 50px; cursor: pointer; width: 100%; font-weight: bold; letter-spacing: 1px; transition: 0.2s; font-family: inherit; }
+        .btn-main { border-color: var(--neon-blue); color: var(--neon-blue); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
+
+        #settings-panel, #game-over-screen {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(5, 5, 15, 0.95); border: 2px solid var(--neon-blue); padding: 40px; border-radius: 30px;
+            display: none; text-align: center; min-width: 300px; z-index: 100;
+        }
+        #game-over-screen { width: 100%; height: 100%; border: none; border-radius: 0; background: rgba(0,0,0,0.95); }
+    </style>
+</head>
+<body>
+
+<div id="install-prompt" class="pointer" onclick="handleInstall()">
+    <span style="font-size: 14px; font-weight: bold; color: var(--neon-blue);">📲 UYGULAMAYI YÜKLE</span>
+</div>
+
+<div id="ios-install-guide" class="pointer" onclick="this.style.display='none'">
+    <h2 style="color: var(--neon-blue);">iPhone'a Yükle</h2>
+    <p style="line-height: 1.6;">Bu oyunu uygulama olarak kullanmak için:</p>
+    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 20px; margin: 20px 0;">
+        1. Alttaki <strong>Paylaş</strong> ikonuna dokun <br> (Kare içinde yukarı ok)<br><br>
+        2. Listeyi kaydır ve <br><strong>"Ana Ekrana Ekle"</strong> seçeneğini seç.
+    </div>
+    <button class="btn btn-main" style="width: 150px;">ANLADIM</button>
+</div>
+
+<div class="ui-layer">
+    <div class="header">
+        <div style="width: 50px;"></div>
+        <div class="pointer" onclick="togglePause()" style="font-size: 28px; background: rgba(255,255,255,0.1); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">⚙️</div>
+    </div>
+    
+    <div class="stats-container">
+        <div id="combo-ui">KOMBO X2</div>
+        <p class="score-val" id="score-val">0</p>
+        <div id="lvl-display" class="lvl-tag">SEVİYE 1</div>
+    </div>
+
+    <div class="footer">
+        <a href="https://fatihpatir.github.io/web" target="_blank" class="dev-link pointer">FATİH PATIR</a>
+    </div>
+
+    <div id="settings-panel" class="pointer">
+        <h2 style="color: var(--neon-blue); letter-spacing: 6px; margin-top: 0;">DURDURULDU</h2>
+        <button class="btn btn-main" onclick="togglePause()">DEVAM ET</button>
+        <button class="btn" onclick="location.reload()">SİSTEMİ YENİLE</button>
+    </div>
+</div>
+
+<div id="game-over-screen">
+    <h1 style="color: #ff0055; font-size: 45px; letter-spacing: 8px;">SİSTEM ÇÖKTÜ</h1>
+    <p id="final-score" style="font-size: 22px; margin-bottom: 30px;">TOPLAM VERİ: 0</p>
+    <button class="btn btn-main" onclick="location.reload()" style="width: 220px;">YENİDEN BAŞLAT</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score-val');
+    const comboEl = document.getElementById('combo-ui');
+    const lvlEl = document.getElementById('lvl-display');
+    
+    let gameActive = true, isPaused = false;
+    let score = 0, combo = 0, level = 1;
+    let frame = 0, speed = 4.2, spawnRate = 85;
+    let playerColorIndex = 0, shakeTime = 0;
+
+    const themes = [{ colors: ['#00f2ff', '#ff00ff'] }, { colors: ['#39ff14', '#ffff00'] }, { colors: ['#ffee00', '#00f2ff'] }, { colors: ['#ff4e00', '#7a00ff'] }];
+    let particles = [], obstacles = [], stars = [];
+    for(let i=0; i<60; i++) stars.push({x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight, s: Math.random()*2, o: Math.random()});
+
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.onresize = resize; resize();
+
+    function playSfx(f, d=0.1, type='sine') {
+        try { const o = new (window.AudioContext || window.webkitAudioContext)(); const osc = o.createOscillator(); const g = o.createGain(); osc.type = type; osc.frequency.setValueAtTime(f, o.currentTime); g.gain.setValueAtTime(0.1, o.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, o.currentTime + d); osc.connect(g); g.connect(o.destination); osc.start(); osc.stop(o.currentTime + d); } catch(e){}
+    }
+
+    function createParticles(x, y, color) { for(let i=0; i<20; i++) { particles.push({ x, y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 1, color, size: Math.random()*4+1 }); } }
+
+    function togglePause() { if(!gameActive) return; isPaused = !isPaused; document.getElementById('settings-panel').style.display = isPaused ? 'block' : 'none'; document.body.classList.toggle('paused', isPaused); if(!isPaused) loop(); }
+
+    const switchColor = () => { if(!gameActive || isPaused) return; playerColorIndex = playerColorIndex === 0 ? 1 : 0; playSfx(250 + playerColorIndex*150, 0.06, 'triangle'); };
+
+    window.ontouchstart = (e) => { if(!e.target.closest('.pointer')) { e.preventDefault(); switchColor(); } };
+    window.onmousedown = (e) => { if(!e.target.closest('.pointer')) switchColor(); };
+
+    // PWA INSTALL LOGIC
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('install-prompt').style.display = 'flex';
+    });
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (isIOS && !isStandalone) {
+        document.getElementById('install-prompt').style.display = 'flex';
+    }
+
+    function handleInstall() {
+        if (isIOS) {
+            document.getElementById('ios-install-guide').style.display = 'flex';
+        } else if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(() => {
+                deferredPrompt = null;
+                document.getElementById('install-prompt').style.display = 'none';
+            });
+        }
+    }
+
+    function loop() {
+        if(!gameActive || isPaused) return;
+        let theme = themes[(level-1)%themes.length];
+        ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if(shakeTime > 0) { ctx.translate(Math.random()*8-4, Math.random()*8-4); shakeTime--; }
+        stars.forEach(s => { s.y += speed * 0.4; if(s.y > canvas.height) { s.y = 0; s.x = Math.random()*canvas.width; } ctx.fillStyle = `rgba(255,255,255,${s.o})`; ctx.fillRect(s.x, s.y, s.s, s.s); });
+        let pCol = theme.colors[playerColorIndex]; ctx.shadowBlur = 25 + (Math.min(combo, 20)*2); ctx.shadowColor = pCol; ctx.strokeStyle = pCol; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height-160, 55, 0, Math.PI*2); ctx.stroke(); ctx.shadowBlur = 0;
+        particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life -= 0.025; if(p.life <= 0) particles.splice(i, 1); ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, p.size, p.size); }); ctx.globalAlpha = 1;
+        if(frame % Math.floor(spawnRate) === 0) obstacles.push({x: canvas.width/2, y: -50, type: Math.random()>0.5?0:1, r: 24});
+        obstacles.forEach((o, i) => {
+            o.y += speed; let oCol = theme.colors[o.type]; ctx.fillStyle = oCol; ctx.shadowBlur = 10; ctx.shadowColor = oCol; ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
+            if(o.y > canvas.height-220 && o.y < canvas.height-100) {
+                if(o.type === playerColorIndex) {
+                    score += 1 + Math.floor(combo/10); combo++; scoreEl.innerText = score; comboEl.innerText = `KOMBO X${combo}`; comboEl.style.opacity = combo > 2 ? 1 : 0; createParticles(o.x, o.y, oCol); obstacles.splice(i, 1); shakeTime = 6; playSfx(400 + combo*8, 0.08);
+                    if(score % 15 === 0) { level++; speed += 0.45; spawnRate = Math.max(35, spawnRate-4); lvlEl.innerText = `SEVİYE ${level}`; playSfx(800, 0.2, 'square'); }
+                } else endGame();
+            } else if(o.y > canvas.height) endGame();
+        });
+        ctx.setTransform(1, 0, 0, 1, 0, 0); frame++; requestAnimationFrame(loop);
+    }
+
+    function endGame() { gameActive = false; document.getElementById('game-over-screen').style.display = 'flex'; document.getElementById('final-score').innerText = `TOPLAM VERİ: ${score}`; playSfx(60, 0.6, 'sawtooth'); canvas.style.filter = "invert(1) contrast(2)"; }
+
+    loop();
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>
